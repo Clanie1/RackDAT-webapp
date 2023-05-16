@@ -11,6 +11,7 @@ import ColumnaDayPicker from "@/components/dashboard/laboratorios/solicitud/Colu
 import JustificationColumn from "@/components/dashboard/items/solicitudItem/JustificationColumn";
 import { toast, ToastContainer } from "react-toastify";
 import { createContext } from "react";
+import { userIsLogged } from "@/assets/middlewares/authUser";
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const itemIds = ctx.query.selectedItems
@@ -21,7 +22,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 
   const itemsPromises = await itemIds.map(async (id) => {
     const cosa = await axios
-      .get(`https://rackdat.onrender.com/api/RackDAT/equipo/id:int?id=${id}`)
+      .get(`https://rackdat.onrender.com/Equipos/equipo/${id}`)
       .then((res) => res.data);
     return cosa;
   });
@@ -40,19 +41,23 @@ type Props = {
 };
 
 const Index = ({ items }: Props) => {
+  userIsLogged();
   const [selectedDay, setSelectedDay] = useState<Date>(new Date());
+  const [justification, setJustification] = useState<string>("");
   const router = useRouter();
 
   const handleSolicitar = () => {
     toast.success("Default Notification", {
       position: toast.POSITION.TOP_RIGHT,
     });
-    router.push("/dashboard/solicitudes");
+    console.log(selectedDay);
+    console.log(justification);
+    console.log(items);
+    // router.push("/dashboard/solicitudes");
   };
-  console.log(items);
   return (
     <Layout>
-      <LayoutHeader title="Items" />
+      <LayoutHeader title="Equipos" />
       <div className="w-[90%] m-auto mt-10 h-[75vh] max-h-[600px] flex gap-2">
         <ItemsColumns items={items} />
         <ColumnaDayPicker
@@ -62,6 +67,8 @@ const Index = ({ items }: Props) => {
 
         <JustificationColumn
           handleSolicitar={handleSolicitar}
+          justification={justification}
+          setJustification={setJustification}
           day={selectedDay}
         />
       </div>

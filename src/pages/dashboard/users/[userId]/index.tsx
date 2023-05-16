@@ -1,25 +1,25 @@
 import React from "react";
 import Layout from "@/components/dashboard/Layout";
 import LayoutHeader from "@/components/dashboard/LayoutHeader";
-import { useRouter } from "next/router";
 import axios from "axios";
-import { useEffect } from "react";
 import User from "@/assets/interfaces/users";
 import Image from "next/image";
 import UserProfileSolicitud from "@/components/dashboard/user/userid/UserProfileSolicitud";
 import { GetServerSideProps } from "next";
-
-type Props = {
-  user: User;
-};
+import Solitud from "@/assets/interfaces/solicitud";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   if (!context.params) return { props: {} };
   const userId = context.params.userId;
-  let response: any = null;
-  response = await axios
-    .get<User>(
-      `https://rackdat.onrender.com/api/RackDAT/usuario/id:int?id=${userId}`
+  let user = await axios
+    .get<User>(`https://rackdat.onrender.com/Usuarios/usuario/${userId}`)
+    .then((res) => {
+      return res.data;
+    });
+
+  let solicitudes = await axios
+    .get(
+      `https://rackdat.onrender.com/Usuarios/solicitudes-historicas/${userId}`
     )
     .then((res) => {
       return res.data;
@@ -27,21 +27,30 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
   return {
     props: {
-      user: response,
+      user: user,
+      solicitudes: solicitudes,
     },
   };
 };
 
-const index = ({ user }: Props) => {
+type Props = {
+  user: User;
+  solicitudes: Solitud[];
+};
+
+const index = ({ user, solicitudes }: Props) => {
+  console.log(solicitudes);
   return (
     <Layout>
       <LayoutHeader title="Usuarios" />
       <div className="w-[90%] m-auto">
         <div className="my-10 flex">
-          <img
-            src="https://picsum.photos/200/300"
+          <Image
+            src={user.imagen}
             alt=""
-            className="w-28 h-28 ml-10 mr-5 rounded-full"
+            width={100}
+            height={100}
+            className="w-28 h-28 ml-10 mr-5 rounded-full object-cover"
           />
           <div className="flex flex-col h-28 justify-around text-lg">
             <h3 className="uppercase font-semibold ">
@@ -53,9 +62,17 @@ const index = ({ user }: Props) => {
             <h4> Matricula: {user.clave}</h4>
           </div>
         </div>
-        <div className="flex flex-col my-10 gap-4">
-          <UserProfileSolicitud />
-          <UserProfileSolicitud />
+        <hr />
+        <div className="flex flex-col my-10 gap-4 items-center">
+          {solicitudes.length > 0 ? (
+            solicitudes.map((solicitud, index) => {
+              return <UserProfileSolicitud solicitud={solicitud} key={index} />;
+            })
+          ) : (
+            <label className="text-slate-400">
+              Este usuario no ha generado solicitudes
+            </label>
+          )}
         </div>
       </div>
     </Layout>

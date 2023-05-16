@@ -8,6 +8,8 @@ import axios from "axios";
 import { GetServerSideProps } from "next";
 import laboratory from "@/assets/interfaces/laboratory";
 import { useRouter } from "next/navigation";
+import { userIsLogged } from "@/assets/middlewares/authUser";
+import https from "https";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   if (!context.params) {
@@ -15,7 +17,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   }
   const laboratory = await axios
     .get(
-      `https://rackdat.onrender.com/api/RackDAT/lab/id:int?id=${context.params.idLab}`
+      `https://rackdat.onrender.com/Laboratorios/lab/${context.params.idLab}`
     )
     .then((res) => {
       return res.data;
@@ -31,9 +33,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 type Props = { laboratory: laboratory };
 
 const Laboratory = ({ laboratory }: Props) => {
-  console.log(laboratory);
-
   const router = useRouter();
+  userIsLogged();
   return (
     <Layout>
       <LayoutHeader title="Laboratorios" />
@@ -48,7 +49,7 @@ const Laboratory = ({ laboratory }: Props) => {
               className=" w-full h-[300px] object-cover m-auto rounded-xl"
             />
           </div>
-          <div className="flex flex-col py-2 max-w-lg w-1/2 h-[300px] justify-between">
+          <div className="flex flex-col py-2 max-w-lg w-1/2  justify-between">
             <div>
               <h3 className="font-thin text-slate-400 text-sm">
                 Cetys campus Ensenada
@@ -56,26 +57,20 @@ const Laboratory = ({ laboratory }: Props) => {
               <h1 className="text-xl uppercase">
                 Laboratorio{" "}
                 <span className="font-bold text-orange-400">
-                  {laboratory.lab}
+                  {laboratory.laboratorio}
                 </span>
               </h1>
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-4">
               <div className="flex gap-3 items-center">
-                <span>Capacidad: 30 personas</span>
-                <div className="rounded-full bg-green-300 text-green-800 py-1 px-2 w-fit text-sm">
-                  Disponible
-                </div>
+                <span>Capacidad: {laboratory.capacidad} personas</span>
               </div>
               <p className="text-sm text-slate-500">
-                Lorem ipsum dolor sit amet, consectetur adipisicing elit.
-                Suscipit dolor vel, et eligendi sit sapiente enim ab consequatur
-                beatae expedita maiores voluptatibus aperiam iusto obcaecati
-                incidunt quae dolorem? Quidem, illo!
+                {laboratory.descripcion_lab}
               </p>
             </div>
 
-            <div className="">
+            <div className="mt-3">
               <Btn
                 style="strong"
                 onClick={() => {

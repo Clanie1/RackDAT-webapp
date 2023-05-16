@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useEffect, useState } from "react";
 import UserDiv from "../../../components/dashboard/user/userdiv";
 import { FaUserCircle } from "react-icons/fa";
@@ -12,39 +10,92 @@ import axios, { AxiosResponse, AxiosError } from "axios";
 import LayoutHeader from "../../../components/dashboard/LayoutHeader";
 import { GetServerSideProps } from "next";
 import SearchBar from "@/components/dashboard/items/SearchBar";
+import { validateUserRole } from "../../../assets/middlewares/validateUserRole";
+import https from "https";
 
 type Props = {
   users: User[];
   qtyPendingUsers: number;
 };
 
-export const getServerSideProps: GetServerSideProps = async () => {
-  const response = await axios.get<User[]>(
-    "https://rackdat.onrender.com/api/RackDAT/usuarios"
-  );
-  const users = response.data.filter((user) => user.verificado);
-  const pendingUsers = response.data.filter(
-    (user) => user.verificado === false
-  );
-  const qtyPendingUsers = pendingUsers.length;
-  return {
-    props: {
-      users: users,
-      qtyPendingUsers: qtyPendingUsers,
-    },
-  };
-};
-
-const Solicitudes = ({ users, qtyPendingUsers }: Props) => {
-  const [usersClient, setUsers] = useState<User[]>(users);
-  const [search, setSearch] = useState<string>("");
+const Solicitudes = () => {
   const router = useRouter();
+  const [usersClient, setUsers] = useState<User[]>([]);
+  const [users, setUsersServer] = useState<User[]>([]);
+  const [qtyPendingUsers, setQtyPendingUsers] = useState<number>(0);
 
-  const handleSearchChange = (user: string) => {
-    if (search === "") {
+  const getAllUsers = async () => {
+    const users = axios
+      .get<User[]>(
+        "https://rackdat.onrender.com/Usuarios/GetUsuariosVerificados"
+      )
+      .then((res) => {
+        setUsers(res.data);
+        setUsersServer(res.data);
+      });
+
+    const qtyPendingUsers = axios
+      .get<number>(
+        "https://rackdat.onrender.com/Usuarios/usuarios/not-verificados/cantidad"
+      )
+      .then((res) => setQtyPendingUsers(res.data));
+  };
+
+  const getCarrerUsers = async (carreraId: number) => {
+    const users = axios
+      .get<User[]>(
+        `https://rackdat.onrender.com/Usuarios/usuarios/carrera/${carreraId}`
+      )
+      .then((res) => {
+        const filteredUsers = res.data.filter(
+          (user) => user.verificado === true
+        );
+        setUsers(filteredUsers);
+        setUsersServer(res.data);
+      });
+
+    const qtyPendingUsers = axios
+      .get<number>(
+        `https://rackdat.onrender.com/Usuarios/usuarios/not-verificados/cantidad/carrera/${carreraId}`
+      )
+      .then((res) => setQtyPendingUsers(res.data));
+  };
+
+  useEffect(() => {
+    const validated = validateUserRole();
+    if (!validated) {
+      router.push("/403");
+    }
+
+    let userType;
+    let user;
+    const userJSON = localStorage.getItem("user");
+    if (userJSON) {
+      user = JSON.parse(userJSON);
+      if (user && user.id_tipo_usuario) {
+        userType = user.id_tipo_usuario;
+      }
+    }
+    if (userType === 3) {
+      getAllUsers();
+    } else if (userType === 4) {
+      getCarrerUsers(user.id_carrera);
+    }
+  }, []);
+
+  const [search, setSearch] = useState<string>("");
+
+  const filterUsers = (filterUserString: string) => {
+    if (filterUserString === "") {
       setUsers(users);
     }
-    setUsers(usersClient.filter((user) => user.nombre.includes(search)));
+    const newUsers = users.filter((user) => {
+      return (
+        user.nombre.toLowerCase().includes(filterUserString.toLowerCase()) ||
+        user.apellido_pat.toLowerCase().includes(filterUserString.toLowerCase())
+      );
+    });
+    setUsers(newUsers);
   };
 
   const handleChange = (event: any) => {
@@ -55,6 +106,17 @@ const Solicitudes = ({ users, qtyPendingUsers }: Props) => {
     router.push("/dashboard/validate-user");
   };
 
+  const getUserRole = (): number => {
+    if (typeof window !== "undefined") {
+      const userRole = localStorage.getItem("id_tipo_usuario");
+      if (userRole) {
+        const finalRole = parseInt(userRole);
+        return finalRole;
+      }
+    }
+    return 0;
+  };
+
   return (
     <Layout>
       <div className="flex flex-col">
@@ -63,22 +125,29 @@ const Solicitudes = ({ users, qtyPendingUsers }: Props) => {
         <div className=" overflow-y-auto w-[90%] m-auto flex flex-col gap-2  px-2 h-full">
           <div className="flex justify-between mt-5 items-center">
             <div className="w-[400px]">
-              <SearchBar filterItems={handleSearchChange} />
+              <SearchBar
+                filterItems={filterUsers}
+                placeholder="Buscar usuarios"
+              />
             </div>
             <div className="flex justify-end">
               <div className="relative p-2 min-w-fit">
-                <Btn style="dark" onClick={handleButtonClick}>
-                  <label className="text-sm">Nuevas solicitudes</label>
-                </Btn>
-              </div>
-              <div className="rounded-full bg-orange-400 w-5 h-5 flex items-center justify-center text-white p-3 absolute">
-                {qtyPendingUsers}
+                {getUserRole() != 4 ? (
+                  <div></div>
+                ) : (
+                  <Btn style="dark" onClick={handleButtonClick}>
+                    <label className="text-sm">Nuevas solicitudes</label>
+                    <div className="rounded-full bg-orange-400 w-5 h-5 flex items-center justify-center text-white p-3 absolute right-0 top-0">
+                      {qtyPendingUsers}
+                    </div>
+                  </Btn>
+                )}
               </div>
             </div>
           </div>
           {/* assets */}
           <div className=" m-auto h-full w-full py-4 gap-2 flex flex-col">
-            {users.map((user, index) => (
+            {usersClient.map((user, index) => (
               <UserDiv user={user} key={index} />
             ))}
           </div>

@@ -11,10 +11,11 @@ import { GetServerSideProps } from "next";
 import axios, { all } from "axios";
 import { useState } from "react";
 import Item from "@/assets/interfaces/item";
+import { userIsLogged } from "@/assets/middlewares/authUser";
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const equipos = await axios
-    .get("https://rackdat.onrender.com/api/RackDAT/equipos")
+    .get("https://rackdat.onrender.com/Equipos/equipos")
     .then((res) => res.data);
 
   return {
@@ -30,11 +31,11 @@ type Props = {
 
 const Index = ({ allEquipos }: Props) => {
   const router = useRouter();
+  userIsLogged();
   const [selectedRows, setSelectedRows] = useState<Number[]>([]);
   const [equipos, setEquipos] = useState<Item[]>(allEquipos);
 
   const filterItems = (searchBarString: string) => {
-    console.log(searchBarString);
     if (searchBarString === "") {
       setEquipos(allEquipos);
     }
@@ -45,17 +46,18 @@ const Index = ({ allEquipos }: Props) => {
     });
     setEquipos(filteredItems);
   };
-  // console.log(equipos);
-  // console.log(allEquipos);
 
   return (
     <Layout>
-      <LayoutHeader title="Items" />
+      <LayoutHeader title="Equipos" />
       <div className="m-auto w-[90%] flex flex-col">
-        <SearchBar filterItems={filterItems} />
+        <SearchBar
+          filterItems={filterItems}
+          placeholder="Busca el equipo que necesites"
+        />
 
         {/* filters */}
-        <div className="flex justify-between w-full">
+        {/* <div className="flex justify-between w-full">
           <div className="flex gap-2">
             <Filter>
               <option>Tipo de Item</option>
@@ -70,7 +72,7 @@ const Index = ({ allEquipos }: Props) => {
               <option>Lic</option>
             </Filter>
           </div>
-        </div>
+        </div> */}
 
         {/* table */}
         <div className="my-2">
@@ -89,10 +91,21 @@ const Index = ({ allEquipos }: Props) => {
                 "/dashboard/items/solicitudItem?" + urlParams.toString()
               );
             }}
+            disabled={selectedRows.length === 0}
           >
             <div className="flex gap-2 items-center text-sm">
-              <BiBook className="w-4 h-4" />
-              Solicitar
+              {selectedRows.length === 0 ? (
+                "Selecciona un Item"
+              ) : (
+                <>
+                  <BiBook className="w-4 h-4" />
+                  Solicitar
+                  <label className="font-bold">
+                    {selectedRows.length ? selectedRows.length : ""}
+                  </label>
+                  {selectedRows.length === 1 ? " item" : " items"}
+                </>
+              )}
             </div>
           </Btn>
         </div>

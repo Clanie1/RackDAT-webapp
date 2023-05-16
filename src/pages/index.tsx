@@ -7,8 +7,6 @@ import { useUser } from "@auth0/nextjs-auth0/client";
 const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
-  const { user, error, isLoading } = useUser();
-  console.log(user);
   return (
     <div className="w-full h-screen">
       {/* <div className="m-auto w-fit">

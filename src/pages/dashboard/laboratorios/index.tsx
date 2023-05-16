@@ -5,10 +5,11 @@ import LabCard from "@/components/dashboard/laboratorios/LabCard";
 import { GetServerSideProps } from "next";
 import Laboratory from "@/assets/interfaces/laboratory";
 import axios from "axios";
+import { userIsLogged } from "@/assets/middlewares/authUser";
 
 export const getServerSideProps: GetServerSideProps = async () => {
   const laboratories = await axios
-    .get("https://rackdat.onrender.com/api/RackDAT/labs")
+    .get("https://rackdat.onrender.com/Laboratorios/labs")
     .then((res) => {
       return res.data;
     });
@@ -25,6 +26,8 @@ type Props = {
 };
 
 const Index = ({ laboratories }: Props) => {
+  console.log(laboratories);
+
   return (
     <Layout>
       <LayoutHeader title="Laboratorios" />
@@ -39,7 +42,9 @@ const Index = ({ laboratories }: Props) => {
         </div>
         <div className="flex py-6 gap-4 justify-left flex-wrap">
           {laboratories.map((laboratory, index) => {
-            return <LabCard key={index} laboratory={laboratory} />;
+            return (
+              <LabCard key={index} laboratory={laboratory} index={index} />
+            );
           })}
         </div>
       </div>

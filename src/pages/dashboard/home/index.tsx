@@ -5,6 +5,10 @@ import { CgProfile } from "react-icons/cg";
 import { MdLocationPin } from "react-icons/md";
 import { BsFillBoxSeamFill } from "react-icons/bs";
 import Btn from "@/components/global/Btn";
+import { userIsLogged } from "@/assets/middlewares/authUser";
+import Link from "next/link";
+import app from "../../../assets/img/app.png";
+import Image from "next/image";
 
 type Props = {};
 
@@ -24,6 +28,7 @@ const features = [
 ];
 
 const index = (props: Props) => {
+  userIsLogged();
   return (
     <Layout>
       <LayoutHeader title="Home" />
@@ -41,7 +46,15 @@ const index = (props: Props) => {
             </p>
           </div>
           {/* img */}
-          <div className=" w-1/2 bg-[url('https://i.imgur.com/kdNlDpq.png')] bg-cover bg-center h-full" />
+          <div className=" w-1/2 h-full overflow-hidden relative">
+            <Image
+              src={app}
+              alt=""
+              width={500}
+              height={500}
+              style={{ objectFit: "cover", objectPosition: "bottom" }}
+            />
+          </div>
         </div>
 
         {/* features de la app */}
@@ -67,9 +80,9 @@ const index = (props: Props) => {
             );
           })}
         </div>
-        <div className="m-auto">
-          <Btn style="strong">Ve los items disonibles</Btn>
-        </div>
+        <Link className="m-auto" href={"items"}>
+          <Btn style="strong">Ve los items disponibles</Btn>
+        </Link>
       </div>
     </Layout>
   );
